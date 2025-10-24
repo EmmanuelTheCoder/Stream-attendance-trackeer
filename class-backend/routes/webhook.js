@@ -21,21 +21,13 @@ setInterval(() => {
 const verifySignature = (req, res, next) => {
   const { 'x-signature': signature, 'x-api-key': apiKey } = req.headers;
 
-  console.log('🔐 Webhook authentication check:', {
-    eventType: req.body.type,
-    hasSignature: !!signature,
-    hasApiKey: !!apiKey,
-    signatureLength: signature?.length,
-    apiKeyMatch: apiKey === process.env.STREAM_KEY
-  });
-
   if (!signature || !apiKey) {
-    console.error('❌ Missing authentication headers');
+    console.error('Missing authentication headers');
     return res.status(401).json({ error: 'Missing authentication headers' });
   }
 
   if (apiKey !== process.env.STREAM_KEY) {
-    console.error('❌ Invalid API key');
+    console.error('Invalid API key');
     return res.status(401).json({ error: 'Invalid API key' });
   }
 
@@ -48,70 +40,47 @@ const verifySignature = (req, res, next) => {
       .update(bodyToVerify)
       .digest('hex');
 
-    console.log('🔑 Signature comparison:', {
-      usingRawBody: !!req.rawBody,
-      received: signature.substring(0, 20) + '...',
-      expected: expectedSignature.substring(0, 20) + '...',
-      match: signature === expectedSignature
-    });
-
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      console.error('❌ Signature mismatch');
+      console.error('Signature mismatch');
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
-    console.log('✅ Signature verified successfully');
     next();
   } catch (error) {
-    console.error('❌ Signature verification error:', error);
+    console.error('Signature verification error:', error);
     return res.status(401).json({ error: 'Signature verification failed' });
   }
 };
 
 // Event handlers
 const handleEvent = async (type, payload) => {
-    console.log(`\n=== WEBHOOK EVENT RECEIVED ===`);
-    console.log(`Type: ${type}`);
-    console.log(`Payload:`, JSON.stringify(payload, null, 2));
-    console.log(`==============================\n`);
 
   switch (type) {
-    case 'call.session_started':
-      console.log('Call session started:', payload);
-      break;
     case 'call.session_ended':
-      console.log('Call session ended:', payload);
 
       // Generate AI attendance summary
       const callId = payload.call_cid;
-      console.log(`Generating attendance summary for call: ${callId}`);
 
       const result = await generateAttendanceSummary(callId);
 
       if (result) { 
-        console.log('=== ATTENDANCE SUMMARY ===');
-        console.log(result.summary);
-        console.log('==========================');
 
         try {
           // Generate PDF
-          console.log('Generating PDF report...');
           const pdfPath = await generatePDF(
             callId,
             result.summary,
             result.attendanceData,
             result.stats
           );
-          console.log('PDF generated:', pdfPath);
 
           // Send email with PDF attachment
-          console.log('Sending email with PDF attachment...');
           const emailSent = await sendEmailWithPDF(callId, result.summary, pdfPath);
 
           if (emailSent) {
-            console.log('✅ Attendance summary email sent successfully!');
+            console.log('Attendance summary email sent successfully!');
           } else {
-            console.log('❌ Failed to send attendance summary email');
+            console.log('Failed to send attendance summary email');
           }
         } catch (error) {
           console.error('Error in PDF/Email process:', error);
@@ -121,7 +90,6 @@ const handleEvent = async (type, payload) => {
       }
       break;
     case 'call.session_participant_joined':
-      //console.log('Member joined the call:', payload);
       const { data: joinData, error: joinError } = await supabase
         .from('participants')
         .insert([{
@@ -138,15 +106,11 @@ const handleEvent = async (type, payload) => {
 
       if (joinError) {
         console.error('Error storing join data:', joinError);
-      } else {
-        console.log('Join data stored:', joinData);
-      }
+      } 
       break;
 
     case 'call.session_participant_left':
-      //console.log('Member left the call:', payload);
 
-      // Find the most recent session record(s) without left_at
       const { data: sessionData, error: fetchError } = await supabase
         .from('participants')
         .select('*')
@@ -176,10 +140,7 @@ const handleEvent = async (type, payload) => {
 
         if (updateError) {
           console.error('Error updating leave data:', updateError);
-        } else {
-          console.log(`Member left. Duration: ${durationSeconds}s (${Math.floor(durationSeconds / 60)} minutes)`);
-          console.log('Leave data stored:', updateData);
-        }
+        } 
       }
       break;
 
@@ -217,13 +178,10 @@ router.post('/webhook',
     return;
   }
 
-  console.log(`Webhook: ${type} (ID: ${webhookId}, Attempt: ${webhookAttempt})`);
-
   // Process asynchronously
   setImmediate(async () => {
     try {
       await handleEvent(type, payload);
-      console.log(`Processed webhook ${webhookId}`);
     } catch (error) {
       console.error(`Error processing webhook ${webhookId}:`, error);
     }

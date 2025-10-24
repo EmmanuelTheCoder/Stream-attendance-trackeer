@@ -54,13 +54,10 @@ const Call = () => {
         });
 
         await videoClient.connectUser({id: user.id}, user.token);
-        console.log('User connected, creating call instance for:', user.id);
-
+        
         const videoCall = videoClient.call(user.callType, user.callId);
-        console.log('Joining call...');
 
         await videoCall.join({create: false});
-        console.log('Successfully joined call');
 
         if (isMounted) {
           clientRef.current = videoClient;
@@ -70,7 +67,6 @@ const Call = () => {
           setIsLoading(false);
         } else {
           // If component unmounted during initialization, clean up
-          console.log('Component unmounted during init, cleaning up...');
           await videoCall.leave().catch((err) => console.error("Failed to leave:", err));
           await videoClient.disconnectUser().catch((err) => console.error("Failed to disconnect:", err));
         }
@@ -87,7 +83,6 @@ const Call = () => {
 
     return () => {
       isMounted = false;
-      console.log('Cleanup: Leaving call and disconnecting client');
 
       if (callRef.current) {
         callRef.current.leave().catch((err) => console.error("Failed to leave the call:", err));

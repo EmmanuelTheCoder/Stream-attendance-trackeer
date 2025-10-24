@@ -57,10 +57,6 @@ const Lobby = ({ onJoin }) => {
         id: data.userId,
         callType: data.callType,
         callId: data.callId
-        // type: data.type,
-        // fullName,
-        // role,
-        // userId
       });
 
       // Navigate to Call component

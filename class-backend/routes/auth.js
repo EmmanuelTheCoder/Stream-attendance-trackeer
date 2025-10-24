@@ -6,7 +6,7 @@ const { client } = require('../utils')
 const callType = 'default'; 
 const callId = 'class_101';
 
-auth.get("/getauth", async (req, res) => {
+auth.get("/createclass", async (req, res) => {
     
         //create a call
     
@@ -62,10 +62,3 @@ auth.post("/auth", async (req, res) => {
 
 module.exports = auth;
 
-
- // await call.updateCallMembers({
-        //     update_members: [{ 
-        //         user_id: userId, 
-        //         role: role === "Student" ? "user" : "admin"
-        //     }],
-        // });

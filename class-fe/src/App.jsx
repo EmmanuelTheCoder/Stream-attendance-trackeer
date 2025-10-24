@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import './App.css'
-import { StreamCall, StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk"
 import Call from './Call'
 import Lobby from './Lobby'
 import { UserProvider } from './UserContext'
